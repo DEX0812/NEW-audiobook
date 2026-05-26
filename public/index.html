@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EchoBook - Web Novel to Audiobook Converter</title>
+    <link rel="icon" type="image/png" href="https://img.icons8.com/fluency/48/headphones.png">
+    <!-- Google Fonts: Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="background-glow bg-glow-left"></div>
+    <div class="background-glow bg-glow-right"></div>
+
+    <main class="main-container">
+        <!-- Premium Brand Header -->
+        <header class="header">
+            <div class="logo">
+                <span class="emoji-icon">🎧</span>
+                <h1 class="gradient-title">EchoBook</h1>
+            </div>
+            <p class="subtitle">Convert your favorite web novels into natural-sounding, high-quality audiobooks instantly.</p>
+            <div class="gradient-divider"></div>
+        </header>
+
+        <!-- Main Configuration Glass Card -->
+        <section class="glass-card config-section">
+            <h2 class="section-title">⚙️ Configure Audiobook</h2>
+            <form id="convert-form" onsubmit="event.preventDefault(); startConversion();">
+                <!-- Voice Configuration -->
+                <div class="form-group">
+                    <label for="voice-select">Narrator Voice</label>
+                    <select id="voice-select" required>
+                        <option value="en-US-AriaNeural">Aria (US Female - Standard)</option>
+                        <option value="en-US-GuyNeural">Guy (US Male - Standard)</option>
+                        <option value="en-US-JennyNeural">Jenny (US Female - Premium Natural)</option>
+                        <option value="en-GB-SoniaNeural">Sonia (UK Female - British)</option>
+                        <option value="en-GB-RyanNeural">Ryan (UK Male - British)</option>
+                        <option value="en-AU-NatashaNeural">Natasha (Australia Female - Australian)</option>
+                        <option value="en-IN-NeerjaNeural">Neerja (India Female - Indian)</option>
+                    </select>
+                    <span class="help-text">Choose the voice model used by the neural text-to-speech engine.</span>
+                </div>
+
+                <!-- Novel URL -->
+                <div class="form-group">
+                    <label for="novel-url">Web Novel URL</label>
+                    <input type="url" id="novel-url" placeholder="https://freewebnovel.com/some-novel-toc.html" required>
+                    <span class="help-text">Paste the Table of Contents page URL of your web novel. (e.g. FreeWebNovel, RoyalRoad, etc.)</span>
+                </div>
+
+                <!-- Max Chapters Slider -->
+                <div class="form-group">
+                    <div class="slider-label-row">
+                        <label for="max-chapters">Chapters to Scrape</label>
+                        <span id="chapters-value" class="badge">3</span>
+                    </div>
+                    <input type="range" id="max-chapters" min="1" max="50" value="3" oninput="document.getElementById('chapters-value').innerText = this.value">
+                    <div class="vercel-warning">
+                        <span class="warning-icon">⚠️</span>
+                        <span>Vercel serverless runs have a strict timeout limit. Keep chapters count low (1-3 chapters) for testing. For full books, run EchoBook locally!</span>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" id="submit-btn" class="gradient-btn">
+                    <span>🚀 Start Processing</span>
+                </button>
+            </form>
+        </section>
+
+        <!-- Dynamic Conversion Progress Card (Initially Hidden) -->
+        <section id="progress-card" class="glass-card status-card hidden">
+            <h3 class="status-title">⏳ Synthesizing Audiobook</h3>
+            
+            <!-- Pulsing Speech Waves Animation -->
+            <div class="wave-container">
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+            </div>
+
+            <div class="progress-details">
+                <div class="phase-indicator active" id="phase-1">
+                    <div class="phase-bullet">1</div>
+                    <div class="phase-info">
+                        <span class="phase-name">Web Scraping Chapters</span>
+                        <span class="phase-desc" id="phase-1-desc">Connecting to source website and parsing text content...</span>
+                    </div>
+                </div>
+                <div class="phase-indicator" id="phase-2">
+                    <div class="phase-bullet">2</div>
+                    <div class="phase-info">
+                        <span class="phase-name">Neural Text-To-Speech</span>
+                        <span class="phase-desc">Synthesizing audio chunks in speech server...</span>
+                    </div>
+                </div>
+                <div class="phase-indicator" id="phase-3">
+                    <div class="phase-bullet">3</div>
+                    <div class="phase-info">
+                        <span class="phase-name">Audio Stitching</span>
+                        <span class="phase-desc">Stitching sound snippets into an MP3 file...</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Generation Results Card (Initially Hidden) -->
+        <section id="result-card" class="glass-card result-card hidden">
+            <div class="success-banner">
+                <span class="success-icon">🎉</span>
+                <h3 class="success-title">Audiobook Generated Successfully!</h3>
+            </div>
+
+            <!-- Metadata Table -->
+            <div class="meta-grid">
+                <div class="meta-item">
+                    <span class="meta-label">Title</span>
+                    <span class="meta-value" id="res-title">-</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Author</span>
+                    <span class="meta-value" id="res-author">-</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Narrator Voice</span>
+                    <span class="meta-value" id="res-voice">-</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Length (Chars)</span>
+                    <span class="meta-value" id="res-chars">-</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Audio Chunks</span>
+                    <span class="meta-value" id="res-chunks">-</span>
+                </div>
+            </div>
+
+            <!-- Custom Playback Area -->
+            <div class="player-container">
+                <audio id="audio-element" controls></audio>
+            </div>
+
+            <!-- Download Button -->
+            <a id="download-link" href="#" download class="gradient-btn download-btn">
+                <span>📥 Download MP3 Audiobook</span>
+            </a>
+        </section>
+
+        <!-- Premium Footer -->
+        <footer class="footer">
+            <p>EchoBook Audiobook Maker • Powered by FastAPI, Streamlit, and edge-tts</p>
+        </footer>
+    </main>
+    <script src="script.js"></script>
+</body>
+</html>
