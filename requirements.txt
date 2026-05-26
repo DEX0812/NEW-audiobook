@@ -1,0 +1,6 @@
+streamlit
+EbookLib
+beautifulsoup4
+edge-tts
+pydub
+web-novel-scraper
